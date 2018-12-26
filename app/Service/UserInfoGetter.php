@@ -22,24 +22,32 @@ use App\User;
 class UserInfoGetter {
     
     public static function getUsersList(){
-        Log::debug("Redis::command('GET', ['usersList'])".Redis::command('GET', ['usersList']));
-        if(Redis::command('GET', ['usersList'])){
-            return json_decode(Redis::command('GET', ['usersList']));
+        if(env('REDIS')){
+            Log::debug("Redis::command('GET', ['usersList'])".Redis::command('GET', ['usersList']));
+            if(Redis::command('GET', ['usersList'])){
+                return json_decode(Redis::command('GET', ['usersList']));
+            }else{
+                $usersList = User::findUsersList();
+                Redis::command('SET', ['usersList', json_encode($usersList, JSON_UNESCAPED_UNICODE)]);
+                return $usersList;
+            }
         }else{
-            $usersList = User::findUsersList();
-            Redis::command('SET', ['usersList', json_encode($usersList, JSON_UNESCAPED_UNICODE)]);
-            return $usersList;
+            return $usersList = User::findUsersList();
         }
     }
     
     public static function getUserInfo($id){
-        Log::debug("Redis::command('GET', [". $id . "])".Redis::command('GET', [$id]));
-        if(Redis::command('GET', [$id])){
-            return json_decode(Redis::command('GET', [$id]));
+        if(env('REDIS')){
+            Log::debug("Redis::command('GET', [". $id . "])".Redis::command('GET', [$id]));
+            if(Redis::command('GET', [$id])){
+                return json_decode(Redis::command('GET', [$id]));
+            }else{
+                $user = User::findUserById($id);
+                Redis::command('SET', ['usersList', json_encode($user, JSON_UNESCAPED_UNICODE)]);
+                return $user;
+            }
         }else{
-            $user = User::findUserById($id);
-            Redis::command('SET', ['usersList', json_encode($user, JSON_UNESCAPED_UNICODE)]);
-            return $user;
+            return User::findUserById($id);
         }
     }
 }
